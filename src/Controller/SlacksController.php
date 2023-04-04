@@ -22,6 +22,7 @@ class SlacksController extends AppController
     {
         parent::initialize();
         $this->loadComponent('RequestHandler');
+        $this->loadComponent('AddPermit');
     }
 
     public function invokeslack(){
@@ -80,12 +81,13 @@ class SlacksController extends AppController
         $users = TableRegistry::getTableLocator()->get('Users');
         $permits = TableRegistry::getTableLocator()->get('Permits');
 
-        $text = $this->request->getQuery('text');
+        $text = $this->request->getData('text');
 
-        $user_name = $this->request->getQuery('user_name');
+        $user_name = $this->request->getData('user_name');
 
-        $user = $users->find()->where(['name' => $user_name]);
+        $user = $users->find()->where(['username' => $user_name]);
 
+        // /izin bora tosyali 1 idari
         $vars = explode(" ", $text);
 
         $startdate = date("Y-m-d H:i:s");
@@ -96,19 +98,20 @@ class SlacksController extends AppController
 
         $enddate = date("Y-m-d H:i:s", $d);
 
-        $http = new Client();
+        $reason = $vars[3];
 
-        $request = $http->post('http://localhost/permit/permits/add',[
-            'startdate' => $startdate,
-            'enddate' => $enddate,
-            'reason' => $vars[3],
-            'user_id' => $user->select(['id'])
-        ]);
+        if(sizeof($vars) == 5 ){
+            $visitedcustomer = $vars[4];
+        }
 
-        $request = null;
-        $http = null;
+        $save_request = $this->AddPermit->addPermit($startdate, $enddate, $reason, $visitedcustomer, $user);
 
-        $response = $this->response->withType('application/json')->withStringBody(json_encode([]));
+        if($save_request){
+            $response = $this->response->withType('application/json')->withStringBody(json_encode(['text' => 'Izin olusturuldu']));
+        } else{
+            $response = $this->response->withType('application/json')->withStringBody(json_encode(['text' => 'Izin olusturulamadi']));
+        }
+        
 
         return $response;
 

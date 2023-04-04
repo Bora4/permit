@@ -15,6 +15,11 @@ use Cake\Http\ServerRequest;
  */
 class PermitsController extends AppController
 {
+    public function initialize()
+    {
+        parent::initialize();
+        $this->loadComponent('AddPermit');
+    }
 
     /**
      * Index method
@@ -68,10 +73,8 @@ class PermitsController extends AppController
      */
     public function add()
     {
-        $permit = $this->Permits->newEntity();
         if ($this->request->is('post')) {
-            $permit = $this->Permits->patchEntity($permit, $this->request->getData());
-            if ($this->Permits->save($permit)) {
+            if ($this->AddPermit->addPermit) {
                 $this->Flash->success(__('The permit has been saved.'));
 
                 return $this->redirect(['action' => 'index']);
